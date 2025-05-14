@@ -1,4 +1,5 @@
 import { users, games, cooldowns, leaderboard, type User, type InsertUser, type Game, type Cooldown, type Leaderboard } from "@shared/schema";
+import { items, inventory, activeBoosts, type Item, type Inventory, type ActiveBoost, type InsertItem, type InsertInventory, type InsertActiveBoost } from "@shared/shopSchema";
 import { db } from "./db";
 import { eq, and, desc, isNull, lt, sql } from "drizzle-orm";
 
@@ -23,6 +24,29 @@ export interface IStorage {
   // Leaderboard operations
   getLeaderboard(serverId?: string): Promise<Leaderboard[]>;
   updateLeaderboardRanking(userId: number, serverId: string | null, updates: Partial<Leaderboard>): Promise<Leaderboard | undefined>;
+
+  // Shop item operations
+  getAllItems(): Promise<Item[]>;
+  getItemById(id: number): Promise<Item | undefined>;
+  getItemsByCategory(category: string): Promise<Item[]>;
+  getItemsByType(type: string): Promise<Item[]>;
+  createItem(item: InsertItem): Promise<Item>;
+  updateItem(id: number, updates: Partial<Item>): Promise<Item | undefined>;
+  deleteItem(id: number): Promise<boolean>;
+  
+  // Inventory operations
+  getUserInventory(userId: number): Promise<(Inventory & { item: Item })[]>;
+  getInventoryItem(userId: number, itemId: number): Promise<Inventory | undefined>;
+  addItemToInventory(inventoryItem: InsertInventory): Promise<Inventory>;
+  updateInventoryItem(id: number, updates: Partial<Inventory>): Promise<Inventory | undefined>;
+  removeItemFromInventory(id: number): Promise<boolean>;
+  
+  // Active Boosts operations
+  getUserActiveBoosts(userId: number): Promise<(ActiveBoost & { item: Item })[]>;
+  getActiveBoostById(id: number): Promise<ActiveBoost | undefined>;
+  activateBoost(boost: InsertActiveBoost): Promise<ActiveBoost>;
+  deactivateBoost(id: number): Promise<boolean>;
+  clearExpiredBoosts(): Promise<void>;
 }
 
 export class MemStorage implements IStorage {
