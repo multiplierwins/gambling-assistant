@@ -5,8 +5,9 @@ import CoinflipGame from "@/components/CoinflipGame";
 import CrashGame from "@/components/CrashGame";
 import FindTheLadyGame from "@/components/FindTheLadyGame";
 import ConnectFourGame from "@/components/ConnectFourGame";
+import SlotMachineGame from "@/components/SlotMachineGame";
 
-type GameType = "blackjack" | "coinflip" | "crash" | "findthelady" | "connectfour" | "random" | null;
+type GameType = "blackjack" | "coinflip" | "crash" | "findthelady" | "connectfour" | "slotmachine" | "random" | null;
 
 export default function Games() {
   const [activeGame, setActiveGame] = useState<GameType>(null);
@@ -142,9 +143,11 @@ export default function Games() {
         return <FindTheLadyGame onClose={() => setActiveGame(null)} />;
       case "connectfour":
         return <ConnectFourGame onClose={() => setActiveGame(null)} />;
+      case "slotmachine":
+        return <SlotMachineGame onClose={() => setActiveGame(null)} />;
       case "random":
         // For random, let's just pick one of the above
-        const gameOptions = ["blackjack", "coinflip", "crash", "findthelady"] as const;
+        const gameOptions = ["blackjack", "coinflip", "crash", "findthelady", "slotmachine"] as const;
         const randomGame = gameOptions[Math.floor(Math.random() * gameOptions.length)];
         setActiveGame(randomGame);
         return null;
