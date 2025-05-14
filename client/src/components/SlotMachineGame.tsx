@@ -66,7 +66,8 @@ export default function SlotMachineGame({ onClose }: SlotMachineGameProps) {
   const [lines, setLines] = useState(1);
   const [gameState, setGameState] = useState<"initial" | "spinning" | "result">("initial");
   const [gameResult, setGameResult] = useState<GameResult | null>(null);
-  const [spinning, setSpinning] = useState(false);
+  // Whether the reels are currently spinning
+  const [isSpinning, setIsSpinning] = useState(false);
   const [displayedGrid, setDisplayedGrid] = useState<SlotGrid | null>(null);
   const spinIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   
@@ -90,7 +91,7 @@ export default function SlotMachineGame({ onClose }: SlotMachineGameProps) {
     onSuccess: (data: GameResult) => {
       // First set to spinning state
       setGameState("spinning");
-      setSpinning(true);
+      setIsSpinning(true);
       
       // Create a temporary grid for animation
       const tempSymbols = Object.keys(symbolImages);
@@ -122,7 +123,7 @@ export default function SlotMachineGame({ onClose }: SlotMachineGameProps) {
           setDisplayedGrid(data.grid);
           setGameResult(data);
           setGameState("result");
-          setSpinning(false);
+          setIsSpinning(false);
           
           // Refresh user data to update cash amount
           queryClient.invalidateQueries({ queryKey: ["/api/users/me"] });
@@ -300,7 +301,7 @@ export default function SlotMachineGame({ onClose }: SlotMachineGameProps) {
                       <div 
                         key={`${rowIndex}-${colIndex}`} 
                         className={`${
-                          !spinning && isInWinningLine(rowIndex, colIndex) 
+                          !isSpinning && isInWinningLine(rowIndex, colIndex) 
                             ? 'border-2 border-yellow-500 rounded-md shadow-lg shadow-yellow-500/50 animate-pulse' 
                             : ''
                         }`}
