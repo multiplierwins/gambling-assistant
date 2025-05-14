@@ -1,4 +1,4 @@
-import { pgTable, text, serial, integer, timestamp, boolean, real, primaryKey } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, integer, timestamp, boolean, real, primaryKey, jsonb } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 import { relations } from "drizzle-orm";
@@ -152,6 +152,8 @@ export const xpForLevel = (level: number): number => {
 export const levelFromXP = (xp: number): number => {
   return Math.floor(Math.log(xp / 1000) / Math.log(1.5));
 };
+
+// We'll define these tables later to avoid reference issues
 
 // Relations
 export const usersRelations = relations(users, ({ many }) => ({
