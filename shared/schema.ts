@@ -37,7 +37,7 @@ export const cooldowns = pgTable("cooldowns", {
 
 export const leaderboard = pgTable("leaderboard", {
   id: serial("id").primaryKey(),
-  userId: integer("user_id").notNull().unique().references(() => users.id),
+  userId: integer("user_id").notNull().references(() => users.id),
   serverId: text("server_id"),
   cashRank: integer("cash_rank"),
   levelRank: integer("level_rank"),
