@@ -16,15 +16,11 @@ export const users = pgTable("users", {
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 
-export const usersRelations = relations(users, ({ many }) => ({
-  games: many(games),
-  cooldowns: many(cooldowns),
-  leaderboard: many(leaderboard),
-}));
+// Will define relations after all tables are defined
 
 export const games = pgTable("games", {
   id: serial("id").primaryKey(),
-  userId: integer("user_id").notNull(),
+  userId: integer("user_id").notNull().references(() => users.id),
   gameType: text("game_type").notNull(), // 'blackjack', 'coinflip', 'crash', etc.
   bet: integer("bet").notNull(),
   winnings: integer("winnings"),
@@ -34,14 +30,14 @@ export const games = pgTable("games", {
 
 export const cooldowns = pgTable("cooldowns", {
   id: serial("id").primaryKey(),
-  userId: integer("user_id").notNull(),
+  userId: integer("user_id").notNull().references(() => users.id),
   type: text("type").notNull(), // 'daily', 'work', 'vote', etc.
   expiresAt: timestamp("expires_at").notNull(),
 });
 
 export const leaderboard = pgTable("leaderboard", {
   id: serial("id").primaryKey(),
-  userId: integer("user_id").notNull().unique(),
+  userId: integer("user_id").notNull().unique().references(() => users.id),
   serverId: text("server_id"),
   cashRank: integer("cash_rank"),
   levelRank: integer("level_rank"),
@@ -156,3 +152,31 @@ export const xpForLevel = (level: number): number => {
 export const levelFromXP = (xp: number): number => {
   return Math.floor(Math.log(xp / 1000) / Math.log(1.5));
 };
+
+// Relations
+export const usersRelations = relations(users, ({ many }) => ({
+  games: many(games),
+  cooldowns: many(cooldowns),
+  leaderboardEntries: many(leaderboard),
+}));
+
+export const gamesRelations = relations(games, ({ one }) => ({
+  user: one(users, {
+    fields: [games.userId],
+    references: [users.id],
+  }),
+}));
+
+export const cooldownsRelations = relations(cooldowns, ({ one }) => ({
+  user: one(users, {
+    fields: [cooldowns.userId],
+    references: [users.id],
+  }),
+}));
+
+export const leaderboardRelations = relations(leaderboard, ({ one }) => ({
+  user: one(users, {
+    fields: [leaderboard.userId],
+    references: [users.id],
+  }),
+}));
