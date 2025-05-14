@@ -1,0 +1,95 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --background: 240 10% 3.9%;
+  --foreground: 0 0% 98%;
+  --muted: 240 3.7% 15.9%;
+  --muted-foreground: 240 5% 64.9%;
+  --popover: 240 10% 3.9%;
+  --popover-foreground: 0 0% 98%;
+  --card: 240 10% 3.9%;
+  --card-foreground: 0 0% 98%;
+  --border: 240 3.7% 15.9%;
+  --input: 240 3.7% 15.9%;
+  --primary: 230 85.7% 64.7%;
+  --primary-foreground: 0 0% 98%;
+  --secondary: 240 3.7% 15.9%;
+  --secondary-foreground: 0 0% 98%;
+  --accent: 240 3.7% 15.9%;
+  --accent-foreground: 0 0% 98%;
+  --destructive: 0 62.8% 30.6%;
+  --destructive-foreground: 0 0% 98%;
+  --success: 143 64.2% 24.1%;
+  --success-foreground: 0 0% 98%;
+  --warning: 47 100% 64.1%;
+  --warning-foreground: 240 5.9% 10%;
+  --ring: 240 4.9% 83.9%;
+  --radius: 0.5rem;
+  
+  /* Discord Colors */
+  --discord-blue: 235 85.6% 64.7%;
+  --discord-gold: 47 100% 64.1%; 
+  --discord-green: 143 64.2% 24.1%;
+  --discord-red: 0 84.2% 60.2%;
+  --discord-dark: 220 8.9% 23.5%;
+  --discord-darker: 220 7.7% 20.4%;
+  --discord-sidebar: 216 7.2% 13.7%;
+  --discord-light-text: 214 8.1% 74.5%;
+  --discord-bright-green: 142 71.9% 47.6%;
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply font-sans bg-[#36393F] text-white antialiased;
+  }
+
+  /* Game card hover effect */
+  .game-card {
+    @apply transition-all duration-300;
+  }
+  
+  .game-card:hover {
+    @apply transform -translate-y-1 shadow-xl;
+  }
+  
+  /* Sidebar active item */
+  .sidebar-item.active {
+    @apply bg-blue-600/30 text-white;
+  }
+  
+  /* Coin animation */
+  .coin {
+    @apply inline-block;
+    animation: spin 4s linear infinite;
+    transform-style: preserve-3d;
+  }
+  
+  @keyframes spin {
+    0% { transform: rotateY(0deg); }
+    100% { transform: rotateY(360deg); }
+  }
+  
+  /* Card flip */
+  .card-flip {
+    perspective: 1000px;
+    transition: transform 0.6s;
+    transform-style: preserve-3d;
+  }
+  
+  /* Multiplier animation */
+  .multiplier-animation {
+    animation: pulse 1s infinite;
+  }
+  
+  @keyframes pulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+    100% { transform: scale(1); }
+  }
+}
