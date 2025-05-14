@@ -359,6 +359,183 @@ export class DatabaseStorage implements IStorage {
       return newEntry;
     }
   }
+
+  // Shop item operations
+  async getAllItems(): Promise<Item[]> {
+    return db.select().from(items);
+  }
+
+  async getItemById(id: number): Promise<Item | undefined> {
+    const [item] = await db.select().from(items).where(eq(items.id, id));
+    return item;
+  }
+
+  async getItemsByCategory(category: string): Promise<Item[]> {
+    return db.select().from(items).where(eq(items.category, category));
+  }
+
+  async getItemsByType(type: string): Promise<Item[]> {
+    return db.select().from(items).where(eq(items.type, type));
+  }
+
+  async createItem(item: InsertItem): Promise<Item> {
+    const [newItem] = await db.insert(items).values(item).returning();
+    return newItem;
+  }
+
+  async updateItem(id: number, updates: Partial<Item>): Promise<Item | undefined> {
+    const [updatedItem] = await db
+      .update(items)
+      .set(updates)
+      .where(eq(items.id, id))
+      .returning();
+    return updatedItem;
+  }
+
+  async deleteItem(id: number): Promise<boolean> {
+    const result = await db.delete(items).where(eq(items.id, id));
+    return result.rowCount > 0;
+  }
+
+  // Inventory operations
+  async getUserInventory(userId: number): Promise<(Inventory & { item: Item })[]> {
+    const inventoryWithItems = await db
+      .select({
+        inventory: inventory,
+        item: items
+      })
+      .from(inventory)
+      .innerJoin(items, eq(inventory.itemId, items.id))
+      .where(eq(inventory.userId, userId));
+
+    return inventoryWithItems.map(({ inventory: inv, item }) => ({
+      ...inv,
+      item
+    }));
+  }
+
+  async getInventoryItem(userId: number, itemId: number): Promise<Inventory | undefined> {
+    const [inventoryItem] = await db
+      .select()
+      .from(inventory)
+      .where(
+        and(
+          eq(inventory.userId, userId),
+          eq(inventory.itemId, itemId)
+        )
+      );
+    return inventoryItem;
+  }
+
+  async addItemToInventory(inventoryItem: InsertInventory): Promise<Inventory> {
+    // Check if the user already has this item
+    const existingItem = await this.getInventoryItem(inventoryItem.userId, inventoryItem.itemId);
+    
+    if (existingItem) {
+      // Update quantity
+      const [updatedItem] = await db
+        .update(inventory)
+        .set({
+          quantity: existingItem.quantity + (inventoryItem.quantity || 1)
+        })
+        .where(eq(inventory.id, existingItem.id))
+        .returning();
+      return updatedItem;
+    } else {
+      // Add new item
+      const [newInventoryItem] = await db
+        .insert(inventory)
+        .values(inventoryItem)
+        .returning();
+      return newInventoryItem;
+    }
+  }
+
+  async updateInventoryItem(id: number, updates: Partial<Inventory>): Promise<Inventory | undefined> {
+    const [updatedItem] = await db
+      .update(inventory)
+      .set(updates)
+      .where(eq(inventory.id, id))
+      .returning();
+    return updatedItem;
+  }
+
+  async removeItemFromInventory(id: number): Promise<boolean> {
+    const result = await db.delete(inventory).where(eq(inventory.id, id));
+    return result.rowCount > 0;
+  }
+
+  // Active Boosts operations
+  async getUserActiveBoosts(userId: number): Promise<(ActiveBoost & { item: Item })[]> {
+    const boostsWithItems = await db
+      .select({
+        activeBoost: activeBoosts,
+        item: items
+      })
+      .from(activeBoosts)
+      .innerJoin(items, eq(activeBoosts.itemId, items.id))
+      .where(eq(activeBoosts.userId, userId));
+
+    return boostsWithItems.map(({ activeBoost, item }) => ({
+      ...activeBoost,
+      item
+    }));
+  }
+
+  async getActiveBoostById(id: number): Promise<ActiveBoost | undefined> {
+    const [boost] = await db
+      .select()
+      .from(activeBoosts)
+      .where(eq(activeBoosts.id, id));
+    return boost;
+  }
+
+  async activateBoost(boost: InsertActiveBoost): Promise<ActiveBoost> {
+    // Create active boost entry
+    const [newBoost] = await db
+      .insert(activeBoosts)
+      .values(boost)
+      .returning();
+    
+    // Update inventory item to active
+    await db
+      .update(inventory)
+      .set({ isActive: true, activatedAt: new Date() })
+      .where(eq(inventory.id, boost.inventoryId));
+    
+    return newBoost;
+  }
+
+  async deactivateBoost(id: number): Promise<boolean> {
+    // Get boost to find its inventory ID
+    const boost = await this.getActiveBoostById(id);
+    if (!boost) return false;
+    
+    // Update inventory item to inactive
+    await db
+      .update(inventory)
+      .set({ isActive: false, activatedAt: null })
+      .where(eq(inventory.id, boost.inventoryId));
+    
+    // Delete the boost
+    const result = await db.delete(activeBoosts).where(eq(activeBoosts.id, id));
+    return result.rowCount > 0;
+  }
+
+  async clearExpiredBoosts(): Promise<void> {
+    const now = new Date();
+    
+    // Get all expired boosts
+    const expiredBoosts = await db
+      .select()
+      .from(activeBoosts)
+      .where(sql`${activeBoosts.expiresAt} < ${now}`);
+    
+    // Deactivate each boost (updating inventory)
+    for (const boost of expiredBoosts) {
+      await this.deactivateBoost(boost.id);
+    }
+  }
 }
 
 // Switch from memory storage to database storage
