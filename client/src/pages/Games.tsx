@@ -14,6 +14,29 @@ export default function Games() {
   
   const games = [
     {
+      id: "slotmachine",
+      title: "Slot Machine",
+      description: "Spin the reels and match symbols to win big! Play with up to 5 paylines.",
+      odds: "Varied (3x-45x)",
+      command: "/slotmachine [bet] [lines]",
+      bgClass: "from-yellow-800 to-yellow-900",
+      icon: () => (
+        <div className="absolute inset-0 opacity-20 flex items-center justify-center">
+          <div className="grid grid-cols-3 gap-1">
+            <div className="w-8 h-8 bg-red-500 rounded-md flex items-center justify-center">7</div>
+            <div className="w-8 h-8 bg-blue-500 rounded-md flex items-center justify-center">♦</div>
+            <div className="w-8 h-8 bg-yellow-400 rounded-md flex items-center justify-center">$</div>
+            <div className="w-8 h-8 bg-green-500 rounded-md flex items-center justify-center">♣</div>
+            <div className="w-8 h-8 bg-purple-500 rounded-md flex items-center justify-center">★</div>
+            <div className="w-8 h-8 bg-red-600 rounded-md flex items-center justify-center">♥</div>
+            <div className="w-8 h-8 bg-orange-500 rounded-md flex items-center justify-center">♠</div>
+            <div className="w-8 h-8 bg-pink-500 rounded-md flex items-center justify-center">♦</div>
+            <div className="w-8 h-8 bg-yellow-500 rounded-md flex items-center justify-center">7</div>
+          </div>
+        </div>
+      )
+    },
+    {
       id: "blackjack",
       title: "Blackjack",
       description: "Try to get cards totaling 21 without going over. Beat the dealer's hand to win!",
