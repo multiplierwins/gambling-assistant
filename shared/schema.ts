@@ -155,6 +155,9 @@ export const levelFromXP = (xp: number): number => {
 
 // We'll define these tables later to avoid reference issues
 
+// Import all exports from shopSchema to make them available to drizzle-kit
+export * from "./shopSchema";
+
 // Relations
 export const usersRelations = relations(users, ({ many }) => ({
   games: many(games),
