@@ -1,4 +1,6 @@
 import { users, games, cooldowns, leaderboard, type User, type InsertUser, type Game, type Cooldown, type Leaderboard } from "@shared/schema";
+import { db } from "./db";
+import { eq, and, desc, isNull, lt, sql } from "drizzle-orm";
 
 export interface IStorage {
   // User operations
@@ -187,4 +189,153 @@ export class MemStorage implements IStorage {
   }
 }
 
-export const storage = new MemStorage();
+export class DatabaseStorage implements IStorage {
+  // User operations
+  async getUser(id: number): Promise<User | undefined> {
+    const [user] = await db.select().from(users).where(eq(users.id, id));
+    return user;
+  }
+
+  async getUserByUsername(username: string): Promise<User | undefined> {
+    const [user] = await db.select().from(users).where(eq(users.username, username));
+    return user;
+  }
+
+  async createUser(insertUser: InsertUser): Promise<User> {
+    const now = new Date();
+    const [user] = await db
+      .insert(users)
+      .values({
+        ...insertUser,
+        cash: 1000,
+        level: 0,
+        xp: 0,
+        wins: 0,
+        losses: 0,
+        highestWin: 0,
+        createdAt: now
+      })
+      .returning();
+    return user;
+  }
+  
+  async updateUser(id: number, updates: Partial<User>): Promise<User | undefined> {
+    const [updatedUser] = await db
+      .update(users)
+      .set(updates)
+      .where(eq(users.id, id))
+      .returning();
+    return updatedUser;
+  }
+  
+  async getAllUsers(): Promise<User[]> {
+    return db.select().from(users);
+  }
+  
+  // Game operations
+  async createGame(game: Omit<Game, "id" | "playedAt">): Promise<Game> {
+    const now = new Date();
+    const [newGame] = await db
+      .insert(games)
+      .values({
+        ...game,
+        playedAt: now
+      })
+      .returning();
+    return newGame;
+  }
+  
+  async getGamesByUser(userId: number): Promise<Game[]> {
+    return db
+      .select()
+      .from(games)
+      .where(eq(games.userId, userId));
+  }
+  
+  async getGamesByType(gameType: string): Promise<Game[]> {
+    return db
+      .select()
+      .from(games)
+      .where(eq(games.gameType, gameType));
+  }
+  
+  // Cooldown operations
+  async getCooldowns(userId: number): Promise<Cooldown[]> {
+    return db
+      .select()
+      .from(cooldowns)
+      .where(eq(cooldowns.userId, userId));
+  }
+  
+  async setCooldown(cooldown: Omit<Cooldown, "id">): Promise<Cooldown> {
+    const [newCooldown] = await db
+      .insert(cooldowns)
+      .values(cooldown)
+      .returning();
+    return newCooldown;
+  }
+  
+  async clearExpiredCooldowns(): Promise<void> {
+    const now = new Date();
+    await db
+      .delete(cooldowns)
+      .where(
+        sql`${cooldowns.expiresAt} < ${now}`
+      );
+  }
+  
+  // Leaderboard operations
+  async getLeaderboard(serverId?: string): Promise<Leaderboard[]> {
+    if (serverId) {
+      return db
+        .select()
+        .from(leaderboard)
+        .where(eq(leaderboard.serverId, serverId))
+        .orderBy(desc(leaderboard.cashRank), desc(leaderboard.levelRank));
+    }
+    return db
+      .select()
+      .from(leaderboard)
+      .where(isNull(leaderboard.serverId))
+      .orderBy(desc(leaderboard.cashRank), desc(leaderboard.levelRank));
+  }
+  
+  async updateLeaderboardRanking(userId: number, serverId: string | null, updates: Partial<Leaderboard>): Promise<Leaderboard | undefined> {
+    // Find existing entry
+    const [existingEntry] = await db
+      .select()
+      .from(leaderboard)
+      .where(
+        and(
+          eq(leaderboard.userId, userId),
+          serverId ? eq(leaderboard.serverId, serverId) : isNull(leaderboard.serverId)
+        )
+      );
+    
+    if (existingEntry) {
+      // Update existing entry
+      const [updatedEntry] = await db
+        .update(leaderboard)
+        .set({ ...updates, updatedAt: new Date() })
+        .where(eq(leaderboard.id, existingEntry.id))
+        .returning();
+      return updatedEntry;
+    } else {
+      // Create new entry
+      const [newEntry] = await db
+        .insert(leaderboard)
+        .values({
+          userId,
+          serverId,
+          cashRank: updates.cashRank || 0,
+          levelRank: updates.levelRank || 0,
+          updatedAt: new Date()
+        })
+        .returning();
+      return newEntry;
+    }
+  }
+}
+
+// Switch from memory storage to database storage
+export const storage = new DatabaseStorage();

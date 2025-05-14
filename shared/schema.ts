@@ -1,6 +1,7 @@
-import { pgTable, text, serial, integer, timestamp, boolean, real } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, integer, timestamp, boolean, real, primaryKey } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
+import { relations } from "drizzle-orm";
 
 export const users = pgTable("users", {
   id: serial("id").primaryKey(),
@@ -14,6 +15,12 @@ export const users = pgTable("users", {
   highestWin: integer("highest_win").notNull().default(0),
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
+
+export const usersRelations = relations(users, ({ many }) => ({
+  games: many(games),
+  cooldowns: many(cooldowns),
+  leaderboard: many(leaderboard),
+}));
 
 export const games = pgTable("games", {
   id: serial("id").primaryKey(),
